@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+    <title>Document</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700&display=swap');
+
+      body {
+        margin:0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Be Vietnam Pro', sans-serif;
+        background-image:url('./images/bg.jpg');
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      html, body {
+        height:100%;
+      }
+
+      .card {
+        background:#343964;
+        border-radius:10px;
+        padding:50px 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .title {
+        font-size: 14px;
+        font-weight: 700;
+        color:#8B8EAB;
+      }
+      .numbers {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap:10px;
+        margin:20px 0;
+      }
+      .number {
+        border-radius:50%;
+        background:#393F6E;
+        width:20px;
+        height:20px;
+        font-size: 16px;
+        font-weight: 600;
+        color:#E2E4F3;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding:10px 10px;
+        cursor: pointer;
+      }
+      .question {
+        font-size: 20px;
+        font-weight: 600;
+        color:#E2E4F3;
+        margin:10px 0;
+        width:70%;
+        text-align: center;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width:90%;
+        margin-top:20px;
+      }
+      .answer {
+        background:#393F6E;
+        border-radius:10px;
+        font-size: 16px;
+        font-weight: 600;
+        color:#E2E4F3;
+        padding:20px 0;
+        flex: 0 1 48%;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+      }
+      .number:hover, .answer:hover {
+        background-image: linear-gradient(to right, #E65895, #BC6BE8);
+      }
+      .active {
+        background-image: linear-gradient(to right, #E65895, #BC6BE8);
+      }
+    </style>
+    <script>
+      let allCountries = [];
+      let questions = [];
+      let currentQuestion = 0;
+      let answeredQuestions = 0;
+
+      window.onload = function() {
+        init();
+
+        
+      }
+
+      function init() {
+        fetch('https://restcountries.com/v3.1/all')
+          .then(response => response.json())
+          .then(data => {
+            allCountries = data;
+            createQuiz();
+            setupAnswerHandlers();
+            setupNumberHandlers();
+          })
+          .catch(error => {
+            console.log(error)
+          })
+        ;
+      }
+
+      function setupNumberHandlers() {
+        var numbers = document.querySelectorAll('.number');
+        numbers.forEach(numDiv => {
+          numDiv.addEventListener('click', function(e) {
+            var num = parseInt(numDiv.innerHTML) - 1;
+            currentQuestion = num;
+            loadQuestion();
+          });
+        });
+      }
+
+      function setupAnswerHandlers() {
+        var answers = document.querySelectorAll('.answer');
+        answers.forEach(answer => {
+          answer.addEventListener('click', function(e) {
+            // make chosen answer stay highlighted
+            answer.classList.add('active');
+            
+            // if incorrect, show X nex to chosen answer
+            var chosenAnswer = e.target;
+            if (chosenAnswer.innerText !== questions[currentQuestion].answer) {
+              chosenAnswer.querySelector('img').setAttribute('src', './images/Close_round_fill.svg');
+            }
+
+            // whether answered correctly or not, show check next to correct choice
+            var answers2 = document.querySelectorAll('.answer');
+            answers2.forEach(answer2 => {
+              if (answer2.innerText === questions[currentQuestion].answer) {
+                answer2.querySelector('img').setAttribute('src', './images/Check_round_fill.svg');
+              }
+            });
+
+            answeredQuestions++;
+          });
+        });
+      }
+
+      function loadQuestion() {
+        // highlight current and lower question numbers
+        var numbers = document.querySelectorAll('.number');
+        numbers.forEach(numDiv => {
+          var num = parseInt(numDiv.innerHTML) - 1;
+          if (num <= currentQuestion) {
+            numDiv.classList.add('active');
+          } else {
+            numDiv.classList.remove('active');
+          }
+        });
+
+        // question
+        document.querySelector('.question').innerHTML = questions[currentQuestion].question;
+
+        // choices
+        questions[currentQuestion].choices.sort(() => 0.5 - Math.random()); // shuffle
+        document.querySelectorAll('.row')[0].innerHTML = `<div class="answer">${questions[currentQuestion].choices[0]}<img src=""></div><div class="answer">${questions[currentQuestion].choices[1]}<img src=""></div>`;
+        document.querySelectorAll('.row')[1].innerHTML = `<div class="answer">${questions[currentQuestion].choices[2]}<img src=""></div><div class="answer">${questions[currentQuestion].choices[3]}<img src=""></div>`;
+      }
+
+      function createQuiz() {
+        for (var i = 0; i < 10; i++) {
+          generateQuestion();
+        }
+        loadQuestion();
+      }
+
+      function generateQuestion() {
+        var arr = JSON.parse(JSON.stringify(allCountries)); // clone array so we can shuffle it without modifying original
+        var shuffled = arr.sort(() => 0.5 - Math.random()); // shuffle it so we can get first 4 items as choices
+        
+        var capital = shuffled[0].capital[0];
+        var answer = shuffled[0].name.common;
+        var choices = [answer, shuffled[1].name.common, shuffled[2].name.common, shuffled[3].name.common];
+
+        var q = {
+          question: `What country is ${capital}<br>the capital?`,
+          answer: answer,
+          choices: choices,
+        };
+        questions.push(q);
+      }
+    </script>
+</head>
+<body>
+
+  <div class="card">
+    <div class="title">Country Quiz</div>
+    <div class="numbers">
+      <div class="number">1</div>
+      <div class="number">2</div>
+      <div class="number">3</div>
+      <div class="number">4</div>
+      <div class="number">5</div>
+      <div class="number">6</div>
+      <div class="number">7</div>
+      <div class="number">8</div>
+      <div class="number">9</div>
+      <div class="number">10</div>
+    </div>
+    <div class="question"></div>
+    <div class="row">
+      <div class="answer"></div>
+      <div class="answer"></div>
+    </div>
+    <div class="row">
+      <div class="answer"></div>
+      <div class="answer"></div>
+    </div>
+  </div>
+
+</body>
+</html>
